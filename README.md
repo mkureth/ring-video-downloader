@@ -18,5 +18,20 @@ RING_REFRESH_TOKEN=eyJhbGciOi...afa1
 
 ## Run the Code
 
-The example can be found in the [example.ts](./example.ts) file. Once you have followed the Authentication steps, you can start it by running `npm start`
+- `node index.js [location] [date]`
+- Run `node index.js 0 2025-01-07` to download all videos for location 0 from 2025-01-07.
+- Run `node index.js 0` to download all videos for location 0.
+- Run `node index.js` default.
+
+
+## Fixes needed
+
+- `node pages.js` paginationToken is not loading the next page
+
+
+## Next
+
+- Fix paginationToken in pages.js example code
+- Combine pages.js pagination into index.js to load all events from all pages
+- Filter by date param.
 
