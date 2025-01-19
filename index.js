@@ -6,6 +6,11 @@ const fs = require('fs');
 const axios = require('axios');
 const path = require('path');
 
+const args = process.argv.slice(2); // Get command-line arguments
+const locationIndex = parseInt(args[0]) || 0; // Default to 0 if not provided
+const filterDate = args[1] ? new Date(args[1]) : null; // Parse date if provided
+
+
 async function example() {
   const { env } = process;
 
@@ -26,7 +31,13 @@ async function example() {
 
   // Fetch camera events and recording URL for the first location and camera
   if (locations.length > 0 && locations[0].cameras.length > 0) {
-    const loc = locations[0];
+
+    if (locationIndex < 0 || locationIndex >= locations.length) {
+      console.error(`Invalid location index: ${locationIndex}. Available locations: 0 to ${locations.length - 1}`);
+      return;
+    }
+    const loc = locations[locationIndex]; 
+
     try {
       const events = await loc.getCameraEvents();
 
