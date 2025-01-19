@@ -11,7 +11,7 @@ const locationIndex = parseInt(args[0]) || 0; // Default to 0 if not provided
 const filterDate = args[1] ? new Date(args[1]) : null; // Parse date if provided
 
 
-async function example() {
+async function getVideos() {
   const { env } = process;
 
   // Initialize Ring API
@@ -41,6 +41,19 @@ async function example() {
     try {
       const events = await loc.getCameraEvents();
 
+      // Filter events by date if a date is provided
+      const filteredEvents = filterDate
+        ? events.events.filter((event) => {
+            const eventDate = new Date(event.created_at);
+            return eventDate.toDateString() === filterDate.toDateString();
+          })
+        : events.events; // No filtering if no date is specified
+
+      console.log(
+        `Filtered events count: ${filteredEvents.length} for location ${locationIndex}`
+      );
+
+
       // Get cameras
       console.log(loc.cameras);
 
@@ -68,7 +81,7 @@ async function example() {
           fs.mkdirSync(videoFolder);
         }
 
-        for (const event of events.events) {
+        for (const event of filteredEvents) {
           if (event?.ding_id_str) {
             try {
               const recording = await loc.cameras[0].getRecordingUrl(
@@ -199,4 +212,4 @@ async function example() {
   }
 }
 
-example();
+getVideos();
