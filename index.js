@@ -41,6 +41,8 @@ async function getVideos() {
     try {
       const events = await loc.getCameraEvents();
 
+      console.log(events)
+
       const filteredEvents = filterDate
         ? events.events.filter((event) => {
             // Convert event.created_at to "YYYY-MM-DD"
