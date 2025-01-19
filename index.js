@@ -41,19 +41,28 @@ async function getVideos() {
     try {
       const events = await loc.getCameraEvents();
 
-      // Filter events by date if a date is provided
       const filteredEvents = filterDate
         ? events.events.filter((event) => {
+            // Convert event.created_at to "YYYY-MM-DD"
             const eventDate = new Date(event.created_at);
-            return eventDate.toDateString() === filterDate.toDateString();
+            const eventDateString = eventDate.toISOString().split('T')[0];
+
+            // Convert filterDate to "YYYY-MM-DD"
+            const filterDateString = filterDate.toISOString().split('T')[0];
+
+            // Log the string representations for debugging
+            console.log('Event Date String:', eventDateString);
+            console.log('Filter Date String:', filterDateString);
+
+            // Compare the two strings
+            const isMatch = eventDateString === filterDateString;
+            console.log(`Event Date Match: ${isMatch}`); // Log whether the date matches
+
+            return isMatch;
           })
         : events.events; // No filtering if no date is specified
 
-      console.log(
-        `Filtered events count: ${filteredEvents.length} for location ${locationIndex}`
-      );
-
-
+/*
       // Get cameras
       console.log(loc.cameras);
 
@@ -72,6 +81,7 @@ async function getVideos() {
           console.log(event?.source_id);
         }
       }
+*/
 
       // Download videos
       if (events?.events?.length > 0) {
