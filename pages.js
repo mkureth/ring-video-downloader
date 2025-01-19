@@ -27,7 +27,7 @@ async function loadPages() {
       // Fetch all events with pagination
       do {
         const eventsResponse = await loc.getCameraEvents({
-          paginationToken, // Pass the pagination token
+          paginationToken: paginationToken || undefined, // Pass the token only if it exists
         });
 
         console.log(eventsResponse);
