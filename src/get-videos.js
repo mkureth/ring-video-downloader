@@ -4,6 +4,7 @@ const { readFile, writeFile } = require("fs").promises;
 const fs = require("fs");
 const axios = require("axios");
 const path = require("path");
+const slugify = require('slugify')
 
 const args = process.argv.slice(2); // Get command-line arguments
 const locationIndex = parseInt(args[0]) || 0; // Default to 0 if not provided
@@ -83,14 +84,31 @@ async function getVideos() {
             console.log("Video created_at:", event.created_at);
 
             const originalDate = new Date(event.created_at);
+            const date = new Date(originalDate); // Convert to user's timezone 
+            const userTimeZoneDate = new Date(date.toLocaleString()); // Format to YYYY-MM-DD-HH-MM-SS 
+            //const formattedDate = userTimeZoneDate.toISOString().replace('T', '-').replace(/:\d{2}\.\d{3}Z/, ''); 
+            //console.log(formattedDate);
+
+            const formattedDate = userTimeZoneDate
+              .toISOString()
+              .replace(/[:]/g, "-")
+              .replace("T", "_")
+              .replace("Z", "");
+
+            /*OLD
             originalDate.setHours(originalDate.getHours() - 8);
             const formattedDate = originalDate
               .toISOString()
               .replace(/[:]/g, "-")
               .replace("T", "_")
               .replace("Z", "");
+            */
 
-            const fileName = path.join(videoFolder, `video_${formattedDate}.mp4`);
+            const cameraName = slugify(event.doorbot.description, {replacement: '-', remove: undefined, lower: true, strict: false, locale: 'en', trim: true});
+
+            const personDetected = (event.cv_properties.person_detected) ? '-person' : '';
+
+            const fileName = path.join(videoFolder, `${formattedDate}-${cameraName}${personDetected}.mp4`);
 
             const response = await axios({
               url: recording,
