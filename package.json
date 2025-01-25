@@ -1,21 +1,19 @@
 {
-  "name": "ring-client-example",
+  "name": "ring-video-downloader",
   "version": "1.0.0",
-  "description": "Example use of the `ring-client-api` npm package",
-  "main": "lib/index.js",
+  "description": "A utility to interact with the Ring API for downloading videos or creating event logs.",
+  "main": "index.js",
   "scripts": {
-    "start": "npm run ts-example",
-    "auth": "ring-auth-cli",
-    "ts-example": "tsc && node lib/example.js"
+    "auth": "ring-auth-cli"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dgreif/ring-client-example.git"
+    "url": "git+https://github.com/mkureth/ring-video-downloader.git"
   },
   "bugs": {
-    "url": "https://github.com/dgreif/ring-client-example/issues"
+    "url": "https://github.com/mkureth/ring-video-downloader/issues"
   },
-  "homepage": "https://github.com/dgreif/ring-client-example#readme",
+  "homepage": "https://github.com/mkureth/ring-video-downloader#readme",
   "dependencies": {
     "axios": "^1.7.9",
     "date-fns": "^4.1.0",
