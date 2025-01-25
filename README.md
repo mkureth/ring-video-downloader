@@ -11,12 +11,17 @@ A utility to interact with the Ring API for downloading videos and bypassing the
    ```
 
 2. **Install Dependencies**:  
-   Run `npm i` to install the required packages.
+   Execute the following command to install the required packages:
+   ```bash
+   npm i
+   ```
    Prerequisite: make you have [Node.js](https://nodejs.org/) installed.
 
-
 3. **Version Requirements**:
-   Run `nvm 20.9.0` to use `node 20.9.0` and `npm 10.1.0`.
+   Execute the following command to use `node 20.9.0` and `npm 10.1.0`:
+   ```bash
+   nvm 20.9.0
+   ```
    Prerequisite: make you have Node Version Manager installed.
 
 ## Authentication
