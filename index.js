@@ -97,7 +97,6 @@ async function getVideos() {
 
     console.log(`Loaded ${events.length} events from assets/data/events.json.`);
 
-    // Filter events based on the specified date (if provided)
     const filteredEvents = filterDate
       ? events.filter((event) => {
           const eventDate = new Date(event.created_at);
@@ -117,13 +116,13 @@ async function getVideos() {
     if (filteredEvents.length > 0) {
       const videoFolder = path.resolve("assets/videos");
       if (!fs.existsSync(videoFolder)) {
-        fs.mkdirSync(videoFolder, { recursive: true }); // Ensure nested folders are created
+        fs.mkdirSync(videoFolder, { recursive: true });
       }
 
       for (const event of filteredEvents) {
         if (event?.ding_id_str) {
           try {
-            // Retrieve recording URL
+
             const recording = await cameras[0].getRecordingUrl(event.ding_id_str, {
               transcoded: true,
             });
@@ -132,25 +131,14 @@ async function getVideos() {
             console.log("Video created_at:", event.created_at);
 
             const originalDate = new Date(event.created_at);
-            const date = new Date(originalDate); // Convert to user's timezone 
-            const userTimeZoneDate = new Date(date.toLocaleString()); // Format to YYYY-MM-DD-HH-MM-SS 
-            //const formattedDate = userTimeZoneDate.toISOString().replace('T', '-').replace(/:\d{2}\.\d{3}Z/, ''); 
-            //console.log(formattedDate);
+            const date = new Date(originalDate);
+            const userTimeZoneDate = new Date(date.toLocaleString());
 
             const formattedDate = userTimeZoneDate
               .toISOString()
               .replace(/[:]/g, "-")
               .replace("T", "_")
               .replace("Z", "");
-
-            /*OLD
-            originalDate.setHours(originalDate.getHours() - 8);
-            const formattedDate = originalDate
-              .toISOString()
-              .replace(/[:]/g, "-")
-              .replace("T", "_")
-              .replace("Z", "");
-            */
 
             const cameraName = slugify(event.doorbot.description, {replacement: '-', remove: undefined, lower: true, strict: false, locale: 'en', trim: true});
 
