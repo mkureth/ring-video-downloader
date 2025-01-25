@@ -4,45 +4,92 @@ const { readFile, writeFile } = require("fs").promises;
 const fs = require("fs");
 const axios = require("axios");
 const path = require("path");
-const slugify = require('slugify')
+const slugify = require("slugify");
 
 const args = process.argv.slice(2); // Get command-line arguments
 const action = args[0]; // Action to perform (getEvents or getVideos)
 const locationIndex = parseInt(args[1]) || 0; // Location index (default to 0 if not provided)
 const filterDate = args[2] ? new Date(args[2]) : null; // Parse date if provided
 
-async function getVideos() {
-  const { env } = process;
-
-  // Initialize Ring API
-  const ringApi = new RingApi({
-    refreshToken: env.RING_REFRESH_TOKEN,
+async function initializeRingApi() {
+  return new RingApi({
+    refreshToken: process.env.RING_REFRESH_TOKEN,
     debug: true,
   });
+}
 
+async function getLocationAndCameras(ringApi, locationIndex) {
+  const locations = await ringApi.getLocations();
+
+  if (locations.length === 0) {
+    throw new Error("No locations found. Ensure your Ring account is configured correctly.");
+  }
+
+  if (locationIndex < 0 || locationIndex >= locations.length) {
+    throw new Error(`Invalid location index: ${locationIndex}. Available locations: 0 to ${locations.length - 1}`);
+  }
+
+  const location = locations[locationIndex];
+  if (location.cameras.length === 0) {
+    throw new Error(`No cameras found for location: ${location.name}.`);
+  }
+
+  return { location, cameras: location.cameras };
+}
+
+function filterEvents(events, filterDate) {
+  if (!filterDate) return events;
+
+  return events.filter((event) => {
+    const eventDate = new Date(event.created_at).toISOString().split("T")[0];
+    const filterDateString = filterDate.toISOString().split("T")[0];
+    return eventDate === filterDateString;
+  });
+}
+
+async function saveEventsToFile(events, filePath) {
+  await writeFile(filePath, JSON.stringify(events, null, 2), "utf-8");
+  console.log(`Events saved to ${filePath}`);
+}
+
+async function getEvents() {
   try {
-    // Fetch locations and cameras
-    const locations = await ringApi.getLocations();
+    const ringApi = await initializeRingApi();
+    const { location } = await getLocationAndCameras(ringApi, locationIndex);
 
-    if (locations.length === 0) {
-      console.error("No locations found. Ensure your Ring account is configured correctly.");
-      return;
+    let paginationToken = null;
+    const allEvents = [];
+
+    do {
+      const eventsResponse = await location.getCameraEvents({
+        pagination_key: paginationToken || undefined,
+      });
+
+      if (eventsResponse && eventsResponse.events.length > 0) {
+        allEvents.push(...eventsResponse.events);
+      }
+
+      paginationToken = eventsResponse.meta.pagination_key || null;
+    } while (paginationToken);
+
+    const filteredEvents = filterEvents(allEvents, filterDate);
+    console.log(`${filteredEvents.length} event(s) match the filter criteria.`);
+
+    const outputFolder = path.resolve("assets/data");
+    if (!fs.existsSync(outputFolder)) {
+      fs.mkdirSync(outputFolder, { recursive: true });
     }
 
-    if (locationIndex < 0 || locationIndex >= locations.length) {
-      console.error(`Invalid location index: ${locationIndex}. Available locations: 0 to ${locations.length - 1}`);
-      return;
-    }
+    await saveEventsToFile(filteredEvents, path.join(outputFolder, "events.json"));
+  } catch (error) {
+    console.error("Error occurred:", error.message);
+  }
+}
 
-    const loc = locations[locationIndex];
-    const cameras = loc.cameras;
-
-    if (cameras.length === 0) {
-      console.error(`No cameras found for location: ${loc.name}.`);
-      return;
-    }
-
-    console.log(`Using location: ${loc.name} with ${cameras.length} camera(s).`);
+async function getVideos() {
+  try {
+    const ringApi = await initializeRingApi();
+    const { cameras } = await getLocationAndCameras(ringApi, locationIndex);
 
     // Read events from the local JSON file
     const data = await readFile("assets/data/events.json", "utf-8");
@@ -139,111 +186,19 @@ async function getVideos() {
     } else {
       console.log("No valid events found.");
     }
+
   } catch (error) {
-    console.error("Error occurred:", error);
+    console.error("Error occurred:", error.message);
   }
 }
 
-
-async function getEvents() {
-  const { env } = process;
-
-  // Initialize Ring API
-  const ringApi = new RingApi({
-    refreshToken: env.RING_REFRESH_TOKEN,
-    debug: true,
-  });
-
-  try {
-    // Fetch locations and cameras
-    const locations = await ringApi.getLocations();
-
-    if (locations.length === 0) {
-      console.error("No locations found. Ensure your Ring account is configured correctly.");
-      return;
-    }
-
-    if (locationIndex < 0 || locationIndex >= locations.length) {
-      console.error(`Invalid location index: ${locationIndex}. Available locations: 0 to ${locations.length - 1}`);
-      return;
-    }
-
-    const loc = locations[locationIndex];
-    const cameras = loc.cameras;
-
-    if (cameras.length === 0) {
-      console.error(`No cameras found for location: ${loc.name}.`);
-      return;
-    }
-
-    console.log(`Using location: ${loc.name} with ${cameras.length} camera(s).`);
-
-    let paginationToken = null;
-    const allEvents = [];
-
-    // Fetch all events using pagination
-    do {
-      const eventsResponse = await loc.getCameraEvents({
-        pagination_key: paginationToken || undefined,
-      });
-
-      if (eventsResponse && eventsResponse.events.length > 0) {
-        console.log(`Fetched ${eventsResponse.events.length} events.`);
-        allEvents.push(...eventsResponse.events);
-      } else {
-        console.log("No events on this page.");
-      }
-
-      paginationToken = eventsResponse.meta.pagination_key || null;
-      console.log(`Next pagination token: ${paginationToken}`);
-    } while (paginationToken);
-
-    console.log(`Total events fetched: ${allEvents.length}`);
-
-    // Filter events based on the specified date (if provided)
-    const filteredEvents = filterDate
-      ? allEvents.filter((event) => {
-          const eventDate = new Date(event.created_at);
-          const eventDateString = eventDate.toISOString().split("T")[0];
-          const filterDateString = filterDate.toISOString().split("T")[0];
-
-          return eventDateString === filterDateString;
-        })
-      : allEvents;
-
-    console.log(`${filteredEvents.length} event(s) match the filter criteria.`);
-
-    // Save filtered events to a JSON file
-    if (filteredEvents.length > 0) {
-      const outputFolder = path.resolve("assets/data");
-      if (!fs.existsSync(outputFolder)) {
-        fs.mkdirSync(outputFolder, { recursive: true });
-      }
-
-      const jsonFilePath = path.join(outputFolder, `events.json`);
-
-      try {
-        fs.writeFileSync(jsonFilePath, JSON.stringify(filteredEvents, null, 2), "utf-8");
-        console.log(`Events saved to ${jsonFilePath}`);
-      } catch (error) {
-        console.error(`Error saving events to JSON file:`, error);
-      }
-    } else {
-      console.log("No valid events found.");
-    }
-  } catch (error) {
-    console.error("Error occurred:", error);
-  }
-}
-
-// Execute the appropriate function based on the action argument
 if (action === "events") {
   getEvents();
 } else if (action === "videos") {
   getVideos();
 } else {
   console.error(
-    "Invalid action. Please specify 'getEvents' or 'getVideos' as the first argument."
+    "Invalid action. Please specify 'events' or 'videos' as the first argument."
   );
   process.exit(1);
 }
