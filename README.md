@@ -8,7 +8,7 @@ A utility to interact with the Ring API for downloading videos or creating event
 1. **Clone the Repository**:  
    Clone the repository to your local environment:
    ```bash
-   git clone <repository-url>
+   git clone git@github.com:mkureth/ring-video-downloader.git
    ```
 
 2. **Install Dependencies**:  
