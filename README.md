@@ -1,6 +1,6 @@
 # Ring Video Downloader
 
-A utility to interact with the Ring API for downloading videos or creating event logs.
+A utility to interact with the Ring API for downloading videos and bypassing the 50 batch video download limit.
 
 ## Setup
 
