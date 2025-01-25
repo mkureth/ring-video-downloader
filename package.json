@@ -1,7 +1,7 @@
 {
   "name": "ring-video-downloader",
   "version": "1.0.0",
-  "description": "A utility to interact with the Ring API for downloading videos or creating event logs.",
+  "description": "A utility to interact with the Ring API for downloading videos and bypassing the 50 batch video download limit.",
   "main": "index.js",
   "scripts": {
     "auth": "ring-auth-cli"

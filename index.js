@@ -91,7 +91,6 @@ async function getVideos() {
     const ringApi = await initializeRingApi();
     const { cameras } = await getLocationAndCameras(ringApi, locationIndex);
 
-    // Read events from the local JSON file
     const data = await readFile("assets/data/events.json", "utf-8");
     const events = JSON.parse(data);
 
